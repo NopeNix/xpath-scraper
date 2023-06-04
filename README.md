@@ -11,7 +11,7 @@ This container should read a list of targets which consist of URL's and xpath in
 ### Container Name
 nopenix/xpath-scraper
 ### Based on
-[mcr.microsoft.com/powershell:alpine](https://hub.docker.com/_/microsoft-powershell)
+[mcr.microsoft.com/powershell:latest](https://hub.docker.com/_/microsoft-powershell)
 
 ### docker-compose.yml
 ```yml
