@@ -1,3 +1,9 @@
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/NopeNix/xpath-scraper/Build%20and%20Push%20to%20Docker%20Hub.yml?label=Build%20and%20Push%20to%20Docker%20Hub)
+![GitHub issues](https://img.shields.io/github/issues-raw/NopeNix/xpath-scraper)
+![Docker Stars](https://img.shields.io/docker/stars/nopenix/xpath-scraper)
+![GitHub Repo stars](https://img.shields.io/github/stars/NopeNix/xpath-scraper?label=GitHub%20Stars)
+![GitHub top language](https://img.shields.io/github/languages/top/NopeNix/xpath-scraper)
+
 # xpath-scraper
 ## Information about the Container
 ### Purpose
@@ -66,3 +72,5 @@ volumes:
 * Connection to the targets which you want to scrape
 ### Tags
 No Tags, only `:latest`
+### Updates
+The Container gets automatically updated, build and pushed every Sunday.

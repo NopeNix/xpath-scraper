@@ -47,63 +47,65 @@ while ($true) {
     try {
         $Targets | ForEach-Object {
             Write-Host (" - " + $_.name) -ForegroundColor Yellow        
+            # Scraping
             try {
-                # Scraping
                 $ScrapedValue = Select-Html -XPath $_.xpath -Uri $_.url
-              
-                #Region: Replace what defined in $_.replace
-                try {
-                    if ($null -ne $_.replace -and $_.replace -ne "" -and $_.replace -ne "null") {
-                        $json = $_.replace | ConvertFrom-Json
-                        $json | Get-Member -MemberType NoteProperty -ErrorAction Stop | ForEach-Object {
-                            $what = $_.name 
-                            $with = $json.($_.name)
-                            $ScrapedValue = $ScrapedValue.replace($what, $with)
-                        }
-                    }
-                }
-                catch { }
-                #endregion
-
-                #Region:  Check if there is already a table for this data
-                try {
-                    $Query = Invoke-SqlQuery -ConnectionName "db" -Query ("SELECT * FROM information_schema.tables WHERE table_schema = '" + $env:DB_SERVER_DATABASE + "' AND table_name = 'result-" + ($_.name) + "' LIMIT 1;")
-                }
-                catch {
-                    throw("Could not check if table is present: " + $_.Exception.Message) 
-                }       
-                #endregion         
-
-                #Region:  Create Table if it did not exist
-                try {
-                    if ($Query.count -eq "0") {
-                        # Table does not exist, adding table
-                        Invoke-SqlUpdate -ConnectionName "db" -Query ("CREATE TABLE ``$env:DB_SERVER_DATABASE``.``result-" + ($_.name) + "`` ( ``time`` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , ``value`` FLOAT NULL ) ENGINE = InnoDB;") -ErrorAction Stop | Out-Null
-                    }
-                }
-                catch {
-                    throw("Could not add table for new Scraped Item: " + $_.Exception.Message) 
-                } 
-                #endregion
-
-                #Region: Adding to Table
-                try {
-                    $UpdateQuery = Invoke-SqlUpdate  -ConnectionName "db" -Query ("INSERT INTO ``result-" + ($_.name) + "`` (``time``, ``value``) VALUES (current_timestamp(), '" + $ScrapedValue + "');") -ErrorAction Stop
-                    if ($UpdateQuery -ne "1") {
-                        throw "No Data has been inserted into DB"
-                    }
-
-                    Write-Host ("  -> OK: " + $ScrapedValue) -ForegroundColor Green
-                }
-                catch {
-                    Throw ("  -> Could not add the data to its table: " + $_.Exception.Message)
-                }
-                #endregion
             }
             catch {
-                Write-Host (" -> Error while Scraping: " + $_.Exception.Message) -ForegroundColor Red
-                Exit
+                Write-Host ("  -> Could not Scrape item. " + $_.Exception.Message) -ForegroundColor Red
             }
+              
+            #Region: Replace what defined in $_.replace
+            try {
+                if ($null -ne $_.replace -and $_.replace -ne "" -and $_.replace -ne "null") {
+                    $json = $_.replace | ConvertFrom-Json
+                    $json | Get-Member -MemberType NoteProperty -ErrorAction Stop | ForEach-Object {
+                        $what = $_.name 
+                        $with = $json.($_.name)
+                        $ScrapedValue = $ScrapedValue.replace($what, $with)
+                    }
+                }
+            }
+            catch {
+                Write-Host ("  -> Error while replacing. " + $_.Exception.Message) -ForegroundColor Red
+             }
+            #endregion
+
+            #Region:  Check if there is already a table for this data
+            try {
+                $Query = Invoke-SqlQuery -ConnectionName "db" -Query ("SELECT * FROM information_schema.tables WHERE table_schema = '" + $env:DB_SERVER_DATABASE + "' AND table_name = 'result_" + ($_.name) + "' LIMIT 1;")
+            }
+            catch {
+                Write-Host ("  -> Could not check if table is present: " + $_.Exception.Message) -ForegroundColor Red 
+            }       
+            #endregion         
+
+            #Region:  Create Table if it did not exist
+            try {
+                if ($Query.count -eq "0") {
+                    # Table does not exist, adding table
+                    Invoke-SqlUpdate -ConnectionName "db" -Query ("CREATE TABLE ``$env:DB_SERVER_DATABASE``.``result_" + ($_.name) + "`` ( ``time`` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP , ``value`` FLOAT NULL ) ENGINE = InnoDB;") -ErrorAction Stop | Out-Null
+                }
+            }
+            catch {
+                Write-Host ("  -> Could not add table for new Scraped Item: " + $_.Exception.Message) -ForegroundColor Red
+            } 
+            #endregion
+
+            #Region: Adding to Table
+            try {
+                $UpdateQuery = Invoke-SqlUpdate  -ConnectionName "db" -Query ("INSERT INTO ``result_" + ($_.name) + "`` (``time``, ``value``) VALUES (current_timestamp(), '" + $ScrapedValue + "');") -ErrorAction Stop
+                if ($UpdateQuery -ne "1") {
+                    throw "No Data has been inserted into DB"
+                }
+
+                Write-Host ("  -> OK: " + $ScrapedValue) -ForegroundColor Green
+            }
+            catch {
+                Write-Host ("  -> Could not add the data to its table: " + $_.Exception.Message)  -ForegroundColor Red
+            }
+            #endregion
+
         }
     }
     catch {}
